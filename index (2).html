@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trắc nghiệm dao động cơ</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--text:#1c2430;--muted:#5b6675;--accent:#2457c5;--border:#dde2ea;--ok:#1b8a4b;--okbg:#e4f6ec;--bad:#c62f3b;--badbg:#fdeaec}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1b212b;--text:#e8ecf2;--muted:#9aa5b4;--accent:#7aa5ff;--border:#2c3544;--ok:#4cd08a;--okbg:#17332599;--bad:#ff7b86;--badbg:#3a1a1e99}}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 14px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+main{max-width:680px;margin:0 auto}
+h1{font-size:1.35rem;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
+.q{font-size:1.08rem;font-weight:600;margin:6px 0 14px}
+.opt{display:flex;gap:10px;width:100%;text-align:left;background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;margin:8px 0;font:inherit;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt b{min-width:1.3em;color:var(--accent)}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}
+.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.opt:disabled{cursor:default}
+.fb{margin-top:12px;padding:10px 13px;border-radius:10px;font-size:.95rem}
+.fb.ok{background:var(--okbg);color:var(--ok)}
+.fb.bad{background:var(--badbg);color:var(--bad)}
+.fb span{color:var(--text)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer;margin:12px 8px 0 0}
+.btn.alt{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.score{font-size:2.2rem;font-weight:700;color:var(--accent);margin:6px 0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Trắc nghiệm dao động cơ</h1>
+<div class="card" id="quiz">
+  <div class="meta"><span id="mode"></span><span id="count"></span></div>
+  <div class="bar"><i id="prog"></i></div>
+  <div id="play">
+    <div class="q" id="q"></div>
+    <div id="opts"></div>
+    <div id="fb" class="fb hide"></div>
+    <button class="btn hide" id="next">Câu tiếp theo</button>
+  </div>
+  <div id="end" class="hide">
+    <div>Kết quả vòng này</div>
+    <div class="score" id="sc"></div>
+    <div id="msg"></div>
+    <button class="btn" id="retryWrong">Làm lại câu sai</button>
+    <button class="btn alt" id="retryAll">Làm lại từ đầu</button>
+  </div>
+</div>
+</main>
+<script>
+const BANK=[
+{q:"[Dao động điều hòa] Cơ năng của vật dao động điều hòa:",o:["Không đổi theo thời gian","Biến thiên với tần số f","Biến thiên với tần số 2f","Luôn bằng thế năng"],a:0,e:"W = W_t + W_đ = ½kA² = ½mω²A² = const."},
+{q:"[Dao động điều hòa] Vật dao động điều hòa với tần số f. Động năng và thế năng biến thiên tuần hoàn với tần số:",o:["2f","f","f/2","4f"],a:0,e:"Động năng và thế năng biến thiên với tần số góc 2ω, tần số 2f."},
+{q:"[Dao động điều hòa] Vật dao động điều hòa với chu kì T. Động năng và thế năng biến thiên tuần hoàn với chu kì:",o:["T/2","T","2T","T/4"],a:0,e:"Chu kì biến thiên của động năng và thế năng là T/2."},
+{q:"[Dao động điều hòa] Hệ thức độc lập liên hệ động năng với li độ x là:",o:["W_đ = ½k(A² − x²)","W_đ = ½k(A² + x²)","W_đ = ½kx²","W_đ = ½kA² − kx²"],a:0,e:"W_đ = W − W_t = ½kA² − ½kx² = ½k(A² − x²)."},
+{q:"[Dao động điều hòa] Khi động năng bằng thế năng thì li độ của vật là:",o:["x = ±A/√2","x = ±A/2","x = ±A/√3","x = ±A√2"],a:0,e:"W_t = W/2 ⇒ ½kx² = ¼kA² ⇒ x = ±A/√2."},
+{q:"[Dao động điều hòa] Thời gian ngắn nhất giữa hai lần liên tiếp động năng bằng thế năng là:",o:["T/4","T/2","T/8","T"],a:0,e:"Hai lần liên tiếp W_đ = W_t cách nhau T/4."},
+{q:"[Dao động điều hòa] Thế năng của vật dao động điều hòa đạt cực đại tại:",o:["Vị trí biên","Vị trí cân bằng","Vị trí x = A/2","Mọi vị trí"],a:0,e:"Tại biên v = 0 nên W_t = W là cực đại, W_đ = 0."},
+{q:"[Dao động điều hòa] Động năng của vật dao động điều hòa đạt cực đại tại:",o:["Vị trí cân bằng","Vị trí biên","Vị trí x = A/2","Mọi vị trí"],a:0,e:"Tại VTCB x = 0 nên W_t = 0, W_đ = W là cực đại."},
+{q:"[Con lắc lò xo] Tần số góc (tốc độ góc) của con lắc lò xo có khối lượng m, độ cứng k là:",o:["ω = √(k/m)","ω = √(m/k)","ω = 2π√(m/k)","ω = k/m"],a:0,e:"ω = √(k/m)."},
+{q:"[Con lắc lò xo] Chu kì dao động của con lắc lò xo là:",o:["T = 2π√(m/k)","T = 2π√(k/m)","T = (1/2π)√(k/m)","T = √(m/k)"],a:0,e:"T = 2π/ω = 2π√(m/k)."},
+{q:"[Con lắc lò xo] Tần số dao động của con lắc lò xo là:",o:["f = (1/2π)√(k/m)","f = 2π√(k/m)","f = (1/2π)√(m/k)","f = √(k/m)"],a:0,e:"f = 1/T = ω/2π = (1/2π)√(k/m)."},
+{q:"[Con lắc lò xo] Mối liên hệ giữa ω, T và f là:",o:["ω = 2π/T = 2πf","ω = T/2π = f/2π","ω = 2πT = f/2π","ω = 1/T = 1/f"],a:0,e:"ω = 2π/T = 2πf, và f = 1/T."},
+{q:"[Con lắc lò xo] Thế năng của con lắc lò xo ở li độ x là:",o:["W_t = ½kx²","W_t = ½mx²","W_t = kx²","W_t = ½kx"],a:0,e:"W_t = ½kx² = ½mω²x² = ½kA² cos²(ωt + φ)."},
+{q:"[Con lắc lò xo] Động năng của con lắc lò xo là:",o:["W_đ = ½mv²","W_đ = ½kv²","W_đ = mv²","W_đ = ½mx²"],a:0,e:"W_đ = ½mv² = ½kA² sin²(ωt + φ)."},
+{q:"[Con lắc lò xo] Cơ năng của con lắc lò xo bằng:",o:["½kA²","½kx²","½mv²","kA²"],a:0,e:"W = ½kA² = ½mω²A² = ½mv²_max."},
+{q:"[Con lắc lò xo] Biểu thức nào sau đây KHÔNG phải là cơ năng của con lắc lò xo?",o:["½kx²","½kA²","½mω²A²","½mv²_max"],a:0,e:"½kx² là thế năng tại li độ x, không phải cơ năng."},
+{q:"[Con lắc lò xo] Thế năng của con lắc lò xo theo thời gian được viết là:",o:["W_t = ½kA² cos²(ωt + φ)","W_t = ½kA² sin²(ωt + φ)","W_t = ½kA² cos(ωt + φ)","W_t = kA² cos²(ωt + φ)"],a:0,e:"x = A cos(ωt + φ) nên W_t = ½kx² = ½kA² cos²(ωt + φ)."},
+{q:"[Con lắc đơn] Tần số góc (tốc độ góc) của con lắc đơn dao động nhỏ là:",o:["ω = √(g/ℓ)","ω = √(ℓ/g)","ω = 2π√(ℓ/g)","ω = g/ℓ"],a:0,e:"ω = √(g/ℓ)."},
+{q:"[Con lắc đơn] Chu kì dao động nhỏ của con lắc đơn là:",o:["T = 2π√(ℓ/g)","T = 2π√(g/ℓ)","T = (1/2π)√(ℓ/g)","T = √(ℓ/g)"],a:0,e:"T = 2π/ω = 2π√(ℓ/g)."},
+{q:"[Con lắc đơn] Tần số dao động nhỏ của con lắc đơn là:",o:["f = (1/2π)√(g/ℓ)","f = (1/2π)√(ℓ/g)","f = 2π√(g/ℓ)","f = √(g/ℓ)"],a:0,e:"f = 1/T = ω/2π = (1/2π)√(g/ℓ)."},
+{q:"[Con lắc đơn] Mối liên hệ nào sau đây đúng với con lắc đơn dao động nhỏ?",o:["T = 2π/ω = 1/f","T = ω/2π = 1/f","T = 2πω = f","T = 1/ω = 2πf"],a:0,e:"T = 2π/ω và f = 1/T."},
+{q:"[Dao động cưỡng bức] Dao động cưỡng bức là dao động chịu tác dụng của:",o:["Ngoại lực biến thiên tuần hoàn","Lực cản của môi trường","Lực đàn hồi","Một lực không đổi"],a:0,e:"Dao động cưỡng bức xảy ra dưới tác dụng của ngoại lực cưỡng bức biến thiên tuần hoàn."},
+{q:"[Dao động cưỡng bức] Tần số của dao động cưỡng bức ổn định bằng:",o:["Tần số của ngoại lực cưỡng bức","Tần số riêng của hệ","Tổng hai tần số trên","Hiệu hai tần số trên"],a:0,e:"Sau giai đoạn chuyển tiếp, hệ dao động với tần số của ngoại lực cưỡng bức."},
+{q:"[Dao động cưỡng bức] Biên độ của dao động cưỡng bức phụ thuộc vào:",o:["Biên độ ngoại lực và độ chênh lệch giữa tần số ngoại lực với tần số riêng","Chỉ biên độ ngoại lực","Chỉ tần số riêng của hệ","Thời điểm bắt đầu dao động"],a:0,e:"Biên độ phụ thuộc biên độ ngoại lực, lực cản và độ chênh lệch |f − f₀|."},
+{q:"[Dao động cưỡng bức] Với cùng biên độ ngoại lực, tần số ngoại lực càng gần tần số riêng thì biên độ dao động cưỡng bức:",o:["Càng lớn","Càng nhỏ","Không đổi","Bằng 0"],a:0,e:"|f − f₀| càng nhỏ thì biên độ dao động cưỡng bức càng lớn."},
+{q:"[Dao động duy trì] Dao động duy trì là dao động được:",o:["Bổ sung năng lượng đúng bằng phần mất mát sau mỗi chu kì","Triệt tiêu hoàn toàn lực cản","Tác dụng ngoại lực có tần số bất kì","Tăng biên độ liên tục"],a:0,e:"Dao động duy trì giữ biên độ không đổi nhờ bù đúng phần năng lượng mất mát."},
+{q:"[Dao động duy trì] Tần số của dao động duy trì bằng:",o:["Tần số riêng của hệ","Tần số của ngoại lực bất kì","Hai lần tần số riêng","Không xác định"],a:0,e:"Dao động duy trì có tần số bằng tần số riêng f₀ của hệ."},
+{q:"[Dao động duy trì] Điểm khác nhau chính giữa dao động duy trì và dao động cưỡng bức là:",o:["Duy trì: ngoại lực được điều khiển bởi chính dao động của hệ; cưỡng bức: ngoại lực độc lập với hệ","Duy trì có biên độ giảm dần, cưỡng bức thì không","Duy trì không cần cung cấp năng lượng","Hai loại này hoàn toàn giống nhau"],a:0,e:"Ở dao động duy trì, hệ tự điều khiển việc bù năng lượng và dao động với tần số riêng."},
+{q:"[Cộng hưởng] Hiện tượng cộng hưởng xảy ra khi:",o:["Tần số ngoại lực bằng tần số riêng của hệ","Tần số ngoại lực lớn hơn tần số riêng nhiều lần","Tần số ngoại lực nhỏ hơn tần số riêng nhiều lần","Ngoại lực có biên độ lớn"],a:0,e:"Điều kiện cộng hưởng: f = f₀ (tương đương ω = ω₀, T = T₀)."},
+{q:"[Cộng hưởng] Khi xảy ra cộng hưởng, biên độ dao động cưỡng bức:",o:["Đạt giá trị cực đại","Bằng 0","Đạt giá trị cực tiểu","Không phụ thuộc lực cản"],a:0,e:"Cộng hưởng là hiện tượng biên độ dao động cưỡng bức tăng đến giá trị cực đại."},
+{q:"[Cộng hưởng] Lực cản của môi trường càng lớn thì biên độ cực đại khi cộng hưởng:",o:["Càng nhỏ","Càng lớn","Không đổi","Luôn bằng 0"],a:0,e:"Ma sát lớn làm đỉnh cộng hưởng thấp hơn, tức biên độ cực đại nhỏ hơn."},
+{q:"[Cộng hưởng] Điều kiện cộng hưởng nào sau đây đúng (f₀, ω₀, T₀ là của hệ)?",o:["f = f₀","f = 2f₀","f = f₀/2","f = 0"],a:0,e:"Cộng hưởng khi tần số cưỡng bức bằng tần số riêng: f = f₀."}
+];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let queue=[],idx=0,wrong=[],right=0,round=1,view=null;
+function start(list,label){
+  queue=shuffle(list);idx=0;wrong=[];right=0;
+  $("mode").textContent=label;$("play").classList.remove("hide");$("end").classList.add("hide");show();
+}
+function show(){
+  const it=queue[idx];
+  $("count").textContent="Câu "+(idx+1)+"/"+queue.length;
+  $("prog").style.width=(idx/queue.length*100)+"%";
+  $("q").textContent=it.q;
+  const order=shuffle(it.o.map((t,i)=>({t,ok:i===it.a})));
+  const box=$("opts");box.innerHTML="";
+  order.forEach((op,i)=>{
+    const b=document.createElement("button");b.className="opt";
+    b.innerHTML="<b>"+"ABCD"[i]+".</b><span></span>";b.lastChild.textContent=op.t;
+    b.onclick=()=>pick(b,op,order,it);box.appendChild(b);
+  });
+  $("fb").classList.add("hide");$("next").classList.add("hide");
+}
+function pick(btn,op,order,it){
+  const bs=[...$("opts").children];
+  bs.forEach((b,i)=>{b.disabled=true;if(order[i].ok)b.classList.add("ok")});
+  const fb=$("fb");fb.classList.remove("hide","ok","bad");
+  if(op.ok){right++;fb.classList.add("ok");fb.innerHTML="Chính xác! <span></span>"}
+  else{btn.classList.add("bad");wrong.push(it);fb.classList.add("bad");fb.innerHTML="Chưa đúng. <span></span>"}
+  fb.lastChild.textContent=it.e;
+  const n=$("next");n.classList.remove("hide");
+  n.textContent=idx===queue.length-1?"Xem kết quả":"Câu tiếp theo";n.focus();
+}
+$("next").onclick=()=>{
+  if(idx<queue.length-1){idx++;show()}else finish();
+};
+function finish(){
+  $("play").classList.add("hide");$("end").classList.remove("hide");
+  $("prog").style.width="100%";
+  $("sc").textContent=right+"/"+queue.length;
+  const rw=$("retryWrong");
+  if(wrong.length){
+    rw.classList.remove("hide");rw.textContent="Làm lại "+wrong.length+" câu sai";
+    $("msg").textContent="Hãy ôn lại các câu sai cho đến khi đúng hết.";
+  }else{
+    rw.classList.add("hide");$("msg").textContent="Tuyệt vời, bạn đã trả lời đúng tất cả!";
+  }
+}
+$("retryWrong").onclick=()=>{round++;start(wrong,"Ôn câu sai (lần "+round+")")};
+$("retryAll").onclick=()=>{round=1;start(BANK,"Làm toàn bộ")};
+start(BANK,"Làm toàn bộ");
+</script>
+</body>
+</html>
